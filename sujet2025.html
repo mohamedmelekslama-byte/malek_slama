@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Village NIRD - Gestion Numérique Responsable</title>
+<meta name="description" content="Explorez le Village NIRD et découvrez comment réduire vos dépendances numériques dans les domaines logiciels, matériel, données, énergie et plus.">
+<meta name="author" content="Village NIRD">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+body { margin:0; font-family:'Poppins', sans-serif; color:#fff; overflow-x:hidden; position:relative; background:#1a1a2e; }
+canvas#bgCanvas { position: fixed; top:0; left:0; width:100%; height:100%; z-index:-1; }
+
+.page { position:absolute; top:0; left:0; width:100%; min-height:100vh; padding-bottom:50px; transition: transform 0.8s ease, opacity 0.8s ease; }
+.page.hidden { transform: translateX(100%); opacity:0; pointer-events:none; }
+.page.visible { transform: translateX(0); opacity:1; pointer-events:auto; }
+
+header {
+  background: linear-gradient(-45deg, #4B0082, #6A0DAD, #8A2BE2, #4B0082);
+  background-size: 400% 400%;
+  color:white;
+  text-align:center;
+  padding:25px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.3);
+  border-bottom:2px solid #6A0DAD;
+  animation: gradientBG 15s ease infinite;
+}
+@keyframes gradientBG {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+header h1{ margin:0; font-size:2em; font-weight:600; letter-spacing:1px; text-shadow: 1px 1px 5px rgba(0,0,0,0.3);}
+header p{ margin-top:5px; font-weight:400; color:#dcd6f7; font-style:italic; }
+
+.button-primary { background:#4B0082; color:white; border:none; padding:12px 25px; border-radius:8px; cursor:pointer; font-weight:600; transition:all 0.3s; margin:5px; }
+.button-primary:hover, .button-primary:focus { background:#6A0DAD; transform:scale(1.05); box-shadow:0 4px 12px rgba(0,0,0,0.2); outline:none; }
+
+.village-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:25px; padding:30px; max-width:1100px; margin:0 auto; position:relative; z-index:5; }
+.domain-card { background:rgba(255,255,255,0.15); border-radius:15px; padding:20px; text-align:center; cursor:pointer; transition: transform 0.3s, box-shadow 0.3s; backdrop-filter: blur(10px); color:white; border:none; }
+.domain-card:hover, .domain-card:focus { transform: translateY(-5px); box-shadow:0 12px 25px rgba(0,0,0,0.35); outline:none;}
+.domain-icon { width:50px; height:50px; margin-bottom:12px; }
+.animated-card:hover { animation: bounce 0.6s; }
+@keyframes bounce { 0%,20%,50%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-15px); } 60% { transform: translateY(-7px); } }
+
+#dep-tips-display {
+    max-height: 250px;
+    overflow-y: auto;
+    padding: 10px;
+    margin-bottom: 20px;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    color: white;
+}
+#dep-tips-display ul {
+    list-style: disc inside;
+    padding: 0;
+    margin: 0;
+}
+#dep-tips-display li {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.5s ease;
+    margin-bottom: 8px;
+}
+#dep-tips-display li.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dep-btn { background:#4B0082; color:white; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-weight:600; transition:all 0.3s; margin:5px;}
+.dep-btn:hover, .dep-btn:focus { background:#6A0DAD; transform:scale(1.05); box-shadow:0 4px 12px rgba(0,0,0,0.2); outline:none;}
+
+#characters-container { position:absolute; bottom:10%; left:0; width:100%; height:150px; pointer-events:none; overflow:hidden; z-index:10; }
+#characters-container img { position:absolute; opacity:0.8; transition: left 0.02s linear; }
+
+.chart-container { max-width:600px; margin:20px auto; }
+
+@media(max-width:600px){
+  header h1{ font-size:1.6em; }
+  .village-grid { gap:15px; }
+  .domain-card { padding:15px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<!-- Page 1 -->
+<div id="page1" class="page visible">
+<header>
+<h1>Village NIRD</h1>
+<p>Établissez votre établissement numérique responsable</p>
+</header>
+
+<div id="characters-container"></div>
+
+<div class="village-grid">
+  <button class="domain-card animated-card" type="button" onclick="startMission('logiciel')">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/code.png" class="domain-icon" alt="Logiciels">
+    <h3>Logiciels</h3>
+  </button>
+
+  <button class="domain-card animated-card" type="button" onclick="startMission('materiel')">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/laptop.png" class="domain-icon" alt="Matériel">
+    <h3>Matériel</h3>
+  </button>
+
+  <button class="domain-card animated-card" type="button" onclick="startMission('donnees')">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/database.png" class="domain-icon" alt="Données">
+    <h3>Données</h3>
+  </button>
+
+  <button class="domain-card animated-card" type="button" onclick="startMission('formation')">
+    <img src="https://img.icons8.com/ios-filled/50/ffffff/training.png" class="domain-icon" alt="Formation">
+    <h3>Formation</h3>
+  </button>
+</div>
+
+<div style="text-align:center; margin-top:30px;">
+<button class="button-primary" onclick="goToPage2()">Explorer les dépendances numériques</button>
+</div>
+</div>
+
+<!-- Page 2 -->
+<div id="page2" class="page hidden">
+<header>
+<h1>Réduire les Dépendances Numériques</h1>
+<p>Découvrez les meilleures pratiques pour chaque domaine</p>
+</header>
+
+<div style="max-width:900px; margin:30px auto; padding:25px;">
+<div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:15px;">
+    <button class="dep-btn" onclick="showDependencyTips('logiciel')">Logiciels</button>
+    <button class="dep-btn" onclick="showDependencyTips('materiel')">Matériel</button>
+    <button class="dep-btn" onclick="showDependencyTips('donnees')">Données</button>
+    <button class="dep-btn" onclick="showDependencyTips('energie')">Énergie</button>
+    <button class="dep-btn" onclick="showDependencyTips('communication')">Communication</button>
+    <button class="dep-btn" onclick="showDependencyTips('securite')">Sécurité</button>
+    <button class="dep-btn" onclick="showDependencyTips('formation')">Formation</button>
+    <button class="dep-btn" onclick="showDependencyTips('culture')">Culture Numérique</button>
+</div>
+
+<div id="dep-tips-display"><ul></ul></div>
+
+<div style="text-align:center; margin-top:15px;">
+    <button class="button-primary" onclick="copyTips()">📋 Copier les conseils</button>
+    <button class="button-primary" onclick="downloadPDF()">📄 Télécharger PDF</button>
+</div>
+
+<div class="chart-container">
+<canvas id="depChart"></canvas>
+</div>
+
+<div style="text-align:center; margin-top:25px;">
+<button class="button-primary" onclick="goToPage1()">Retour au village</button>
+</div>
+</div>
+</div>
+
+<script>
+// ---------------- Page Transitions ----------------
+function goToPage2(){
+    document.getElementById('page1').classList.remove('visible'); 
+    document.getElementById('page1').classList.add('hidden'); 
+    setTimeout(()=>{ document.getElementById('page2').classList.remove('hidden'); document.getElementById('page2').classList.add('visible'); }, 300);
+}
+function goToPage1(){
+    document.getElementById('page2').classList.remove('visible'); 
+    document.getElementById('page2').classList.add('hidden'); 
+    setTimeout(()=>{ document.getElementById('page1').classList.remove('hidden'); document.getElementById('page1').classList.add('visible'); }, 300);
+}
+
+// ---------------- Dependency Tips ----------------
+const missions = {
+    logiciel: {tips:["Utiliser LibreOffice, GIMP et alternatives libres.","Réduire abonnements inutiles.","Favoriser logiciels multiplateformes.","Automatiser les mises à jour sélectivement."], progress:60},
+    materiel: {tips:["Réutiliser matériel ancien.","Acheter matériel modulable et réparable.","Éviter l'obsolescence programmée.","Recycler le matériel correctement."], progress:45},
+    donnees: {tips:["Stocker données sur serveurs sécurisés (préférer UE).","Faire sauvegardes chiffrées régulièrement.","Réduire l'utilisation de cloud hors UE.","Nettoyer et archiver les données inutiles."], progress:30},
+    energie: {tips:["Éteindre ordinateurs et appareils inutilisés.","Optimiser consommation énergétique via paramètres.","Utiliser matériel éco-énergétique.","Surveiller la consommation numérique."], progress:50},
+    communication: {tips:["Privilégier outils internes sécurisés.","Limiter l'utilisation des réseaux sociaux.","Consolider les canaux de communication.","Former le personnel à la communication responsable."], progress:70},
+    securite: {tips:["Utiliser des mots de passe forts et uniques.","Activer l'authentification à deux facteurs.","Restreindre l'accès aux données sensibles.","Réaliser des audits réguliers des comptes."], progress:40},
+    formation: {tips:["Former personnel et élèves aux alternatives libres.","Sensibiliser à la sécurité et à la durabilité numérique.","Organiser ateliers et tutoriels pratiques.","Encourager l'application des bonnes pratiques."], progress:55},
+    culture: {tips:["Promouvoir connaissance du logiciel libre et des outils éthiques.","Encourager le respect de la vie privée et durabilité.","Adopter des habitudes numériques responsables.","Partager les bonnes pratiques au sein de l'établissement."], progress:65}
+};
+
+// ---------------- Chart ----------------
+const ctxChart = document.getElementById('depChart').getContext('2d');
+function getBarColor(progress){ if(progress>=70) return '#00FF7F'; else if(progress>=50) return '#FFD700'; else return '#FF4500'; }
+const depChart = new Chart(ctxChart, {
+    type:'bar',
+    data:{
+        labels:Object.keys(missions).map(key=>key.charAt(0).toUpperCase()+key.slice(1)),
+        datasets:[{label:'Progression Réduction Dépendances (%)', data:[0,0,0,0,0,0,0,0], backgroundColor:Object.values(missions).map(m=>getBarColor(m.progress)), borderRadius:8, borderSkipped:false}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.data[ctx.dataIndex]+"% de progression"}}},scales:{y:{beginAtZero:true,max:100,ticks:{stepSize:10}}},animation:{duration:1200,easing:'easeOutQuart'}}
+});
+
+// Animate initial chart bars
+function animateChartInitial(){
+    const targetData = Object.values(missions).map(m=>m.progress);
+    const steps=60;
+    let step=0;
+    function stepAnimation(){ step++; depChart.data.datasets[0].data = depChart.data.datasets[0].data.map((val,i)=> val + (targetData[i]-val)/steps); depChart.update('none'); if(step<steps) requestAnimationFrame(stepAnimation);}
+    requestAnimationFrame(stepAnimation);
+}
+animateChartInitial();
+
+function showDependencyTips(type){
+    const display = document.getElementById('dep-tips-display');
+    display.innerHTML = '<ul></ul>';
+    const ul = display.querySelector('ul');
+    missions[type].tips.forEach((tip, idx)=>{
+        const li = document.createElement('li');
+        li.innerText = tip;
+        ul.appendChild(li);
+        setTimeout(()=>{ li.classList.add('show'); }, idx*150);
+    });
+}
+
+// Copy & PDF
+function copyTips(){ const tipsDiv=document.getElementById('dep-tips-display'); let tipsText=Array.from(tipsDiv.querySelectorAll('li')).map(li=>li.innerText).join('\n'); navigator.clipboard.writeText(tipsText).then(()=>{alert('Les conseils ont été copiés !');}).catch(()=>{alert('Impossible de copier les conseils.');}); }
+function downloadPDF(){ const {jsPDF}=window.jspdf; const doc=new jsPDF(); const tipsDiv=document.getElementById('dep-tips-display'); let tipsText=Array.from(tipsDiv.querySelectorAll('li')).map(li=>li.innerText).join('\n\n'); doc.setFontSize(14); doc.text("Conseils pour réduire les dépendances numériques",10,15); doc.setFontSize(12); const splitText=doc.splitTextToSize(tipsText,180); doc.text(splitText,10,25); doc.save("Conseils_VillageNIRD.pdf"); }
+
+// Background
+const canvas=document.getElementById('bgCanvas'); const ctx=canvas.getContext('2d'); let W=canvas.width=window.innerWidth,H=canvas.height=window.innerHeight; window.addEventListener('resize',()=>{W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}); const particles=[]; for(let i=0;i<80;i++){particles.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*3+1,dx:(Math.random()-0.5)*0.5,dy:(Math.random()-0.5)*0.5,alpha:Math.random()*0.5+0.3});} function animate(){ctx.clearRect(0,0,W,H); let gradient=ctx.createLinearGradient(0,0,W,H); gradient.addColorStop(0,"#1a1a2e"); gradient.addColorStop(1,"#3b3b98"); ctx.fillStyle=gradient; ctx.fillRect(0,0,W,H); particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>W)p.dx*=-1;if(p.y<0||p.y>H)p.dy*=-1; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fillStyle=`rgba(255,255,255,${p.alpha})`; ctx.fill();}); requestAnimationFrame(animate);} animate();
+
+// Characters
+const charactersContainer=document.getElementById('characters-container'); const characterImages=['https://img.icons8.com/color/48/000000/viking.png','https://img.icons8.com/color/48/000000/elf.png','https://img.icons8.com/color/48/000000/soldier.png']; const characters=[]; for(let i=0;i<5;i++){const img=document.createElement('img'); img.src=characterImages[i%characterImages.length]; img.style.bottom=`${Math.random()*50}px`; img.style.left=`${Math.random()*100}%`; img.style.height = `${50 + Math.random()*30}px`; charactersContainer.appendChild(img); characters.push({el:img,speed:0.2+Math.random()*0.3});} function animateCharacters(){characters.forEach(c=>{let left=parseFloat(c.el.style.left); left+=c.speed; if(left>100) left=-10; c.el.style.left=left+'%';}); requestAnimationFrame(animateCharacters);} animateCharacters();
+
+// Placeholder mission
+function startMission(domain){ alert("Mission "+domain+" sélectionnée !"); }
+
+</script>
+</body>
+</html>
